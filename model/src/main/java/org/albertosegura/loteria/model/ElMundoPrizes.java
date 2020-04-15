@@ -1,10 +1,14 @@
 package org.albertosegura.loteria.model;
 
-import lombok.Data;
+import lombok.*;
 
 import java.util.HashMap;
 
-@Data
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@EqualsAndHashCode
 public class ElMundoPrizes {
     String estado;
     HashMap<String, Integer> premios;

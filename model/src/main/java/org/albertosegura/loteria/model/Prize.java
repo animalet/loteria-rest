@@ -1,12 +1,15 @@
 package org.albertosegura.loteria.model;
 
-import lombok.Builder;
-import lombok.Value;
+import lombok.*;
 
 import java.math.BigDecimal;
 
-@Value
+@Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@EqualsAndHashCode
 public class Prize {
     BigDecimal amount;
     Participation participation;

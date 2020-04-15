@@ -1,4 +1,4 @@
-package org.albertosegura.loteria.service;
+package org.albertosegura.loteria.service.external;
 
 import lombok.extern.slf4j.Slf4j;
 import org.albertosegura.loteria.model.ElMundoPrizes;
@@ -17,10 +17,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -30,47 +27,29 @@ import static java.util.Objects.requireNonNull;
 @Slf4j
 public class ElMundoPrizeService implements PrizeService {
     private static final String CACHE_KEY = "elMundoResponseCacheKey";
+    private Cache cache;
 
     @Autowired
     public ElMundoPrizeService(RestTemplate template, @Value("${elmundo.url}") String url, CacheManager cacheManager, @Value("${elmundo.cacheName}") String cacheName) {
         this.template = template;
         this.url = url;
-        this.cacheManager = cacheManager;
-        this.cacheName = cacheName;
+        this.cache = cacheManager.getCache(cacheName);
     }
 
     private final RestTemplate template;
     private final String url;
-    private final CacheManager cacheManager;
-    private final String cacheName;
 
     @Override
     public List<Prize> retrievePrizes(List<Participation> participationList) {
         requireNonNull(participationList);
-        Optional<HashMap<String, Integer>> elMundoPrizes = getElMundoPrizes();
-        if (elMundoPrizes.isEmpty()) {
-            Optional.ofNullable(cacheManager.getCache(cacheName)).ifPresent(Cache::invalidate);
+        HashMap<String, Integer> elMundoPrizes = Optional.ofNullable(cache).map(cache -> cache.get(CACHE_KEY, this::callToElMundo)).orElseGet(() -> {
+            Optional.ofNullable(cache).ifPresent(Cache::invalidate);
             return null;
-        } else {
-            return elMundoPrizes.map(prizes -> extractPrizes(participationList, prizes)).orElse(null);
-        }
-    }
-
-
-    private Optional<HashMap<String, Integer>> getElMundoPrizes() {
-        return Optional.ofNullable(cacheManager.getCache(cacheName)).map(cache -> cache.get(CACHE_KEY, this::getHashMapFromURL));
-    }
-
-    private HashMap<String, Integer> getHashMapFromURL() {
-        ResponseEntity<ElMundoPrizes> response = template.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
         });
-        if (log.isInfoEnabled()) {
-            log.info("Response from El Mundo: {}", response.getStatusCode());
-        }
-        return Optional.ofNullable(response.getBody()).map(ElMundoPrizes::getPremios).orElse(null);
+        return elMundoPrizes == null ? null : extractPrizes(participationList, elMundoPrizes);
     }
 
-    private List<Prize> extractPrizes(List<Participation> participationList, HashMap<String, Integer> prizes) {
+    private List<Prize> extractPrizes(List<Participation> participationList, Map<String, Integer> prizes) {
         return participationList.stream()
                 .map(participation -> {
                     Integer prize = prizes.get(participation.getNumber());
@@ -83,5 +62,14 @@ public class ElMundoPrizeService implements PrizeService {
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    private HashMap<String, Integer> callToElMundo() {
+        ResponseEntity<ElMundoPrizes> response = template.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+        });
+        if (log.isInfoEnabled()) {
+            log.info("Response from El Mundo: {}", response.getStatusCode());
+        }
+        return Optional.ofNullable(response.getBody()).map(ElMundoPrizes::getPremios).orElse(null);
     }
 }

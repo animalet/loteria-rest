@@ -2,6 +2,7 @@ package org.albertosegura.loteria.service;
 
 import org.albertosegura.loteria.model.Participation;
 import org.albertosegura.loteria.model.Prize;
+import org.albertosegura.loteria.service.external.PrizeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

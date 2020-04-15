@@ -1,4 +1,4 @@
-package org.albertosegura.loteria.service;
+package org.albertosegura.loteria.service.external;
 
 import org.albertosegura.loteria.model.Participation;
 import org.albertosegura.loteria.model.Prize;

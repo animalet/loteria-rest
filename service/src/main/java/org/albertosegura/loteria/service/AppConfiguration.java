@@ -32,7 +32,7 @@ public class AppConfiguration {
     }
 
     @Bean
-    public CacheManager cacheManager() {
+    public CacheManager getCacheManager() {
         return new ConcurrentMapCacheManager();
     }
 }
