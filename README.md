@@ -1,23 +1,31 @@
 # loteria-rest
 A small practice application to query spanish Lottery results
 
-It is a tiny Spring Boot microservice calling an external source to retrieve results and matching with specified participations.
+It is a tiny Spring Boot microservice calling an external source to retrieve data and match it against specified participation.
 
 Request example:
 *PUT* to path */*
+```
 [
   {
-    "amount": "34",
+    "amount": "34",     <-- amount in € acquired of number 96090
     "number": "96090"
+  },
+  {
+    "amount": "20",     <-- amount in € acquired of number 40016 
+    "number": "40016"
   }
 ]
-
+```
+Response:
+```
 [
   {
-    "amount": 204,
+    "amount": 204,       <-- Prize obtained
     "participation": {
-      "number": "96090",
-      "amount": 34
+      "number": "96090", <-- Winning number
+      "amount": 34       <-- amount participated
     }
   }
 ]
+```
