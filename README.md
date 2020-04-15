@@ -3,6 +3,8 @@ A small practice application to query spanish Lottery results
 
 It is a tiny Spring Boot microservice calling an external source to retrieve data and match it against specified participation.
 
+Swagger URL for quick testing: http://localhost:8080/swagger-ui.html#/app/calculatePrizesUsingPUT
+
 Request example:
 *PUT* to path */*
 ```
