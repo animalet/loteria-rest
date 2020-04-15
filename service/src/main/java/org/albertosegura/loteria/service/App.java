@@ -30,7 +30,7 @@ public class App {
 
     @PutMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    List<Prize> calculatePrizes(@RequestBody List<Participation> participationList) {
+    public List<Prize> calculatePrizes(@RequestBody List<Participation> participationList) {
         return prizeService.retrievePrizes(participationList);
     }
 }

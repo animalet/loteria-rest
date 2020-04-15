@@ -18,14 +18,4 @@ class AppConfigurationTest {
     void getRestTemplate() {
         assertNotNull(appConfiguration.getRestTemplate());
     }
-
-    @Test
-    void evictCache() {
-        appConfiguration.evictCache();
-    }
-
-    @Test
-    void cacheManager() {
-        assertNotNull(appConfiguration.getCacheManager());
-    }
 }

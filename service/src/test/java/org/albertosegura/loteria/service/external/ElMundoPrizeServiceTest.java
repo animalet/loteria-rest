@@ -11,7 +11,6 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -26,22 +25,25 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static java.util.Map.entry;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
 class ElMundoPrizeServiceTest {
-    public static final String PRIZE_NUMBER = "123";
-    public static final String NON_PRIZE_NUMBER = "456";
+    private static final String PRIZE_NUMBER = "123";
+    private static final String NON_PRIZE_NUMBER = "456";
+    private static final String EL_MUNDO_RESPONSE_CACHE_KEY = "elMundoResponseCacheKey";
+    private static final String URL = "mockUrl";
     @Mock
     private ElMundoPrizeService service;
     @Mock
     private RestTemplate template;
-    private static final String URL = "mockUrl";
-    @Mock
-    private CacheManager cacheManager;
-    private static final String CACHE_NAME = "mockCacheName";
     @Mock
     private Participation participationWithPrize;
     @Mock
@@ -59,9 +61,7 @@ class ElMundoPrizeServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(cacheManager.getCache(CACHE_NAME)).thenReturn(cache);
-
-        service = new ElMundoPrizeService(template, URL, cacheManager, CACHE_NAME);
+        service = new ElMundoPrizeService(template, URL, cache);
     }
 
     @Test
@@ -69,7 +69,7 @@ class ElMundoPrizeServiceTest {
         when(participationWithoutPrize.getNumber()).thenReturn(NON_PRIZE_NUMBER);
         when(participationWithPrize.getNumber()).thenReturn(PRIZE_NUMBER);
         when(participationWithPrize.getAmount()).thenReturn(BigDecimal.ONE);
-        when(cache.get(eq("elMundoResponseCacheKey"), Mockito.<Callable<Map<String, Integer>>>any())).thenReturn(elMundoPrizesMap);
+        when(cache.get(eq(EL_MUNDO_RESPONSE_CACHE_KEY), Mockito.<Callable<Map<String, Integer>>>any())).thenReturn(elMundoPrizesMap);
         List<Prize> prizes = service.retrievePrizes(Arrays.asList(participationWithoutPrize, participationWithPrize));
         assertNotNull(prizes);
         assertEquals(prizes.size(), 1);
@@ -80,7 +80,7 @@ class ElMundoPrizeServiceTest {
         verify(participationWithoutPrize).getNumber();
         verify(elMundoPrizesMap).get(PRIZE_NUMBER);
         verify(elMundoPrizesMap).get(NON_PRIZE_NUMBER);
-        verifyNoMoreInteractions(template, participationWithoutPrize, participationWithPrize, cache, cacheManager, elMundoPrizesMap);
+        verifyNoMoreInteractions(template, participationWithoutPrize, participationWithPrize, cache, elMundoPrizesMap);
     }
 
     @Test
@@ -88,7 +88,7 @@ class ElMundoPrizeServiceTest {
         when(participationWithoutPrize.getNumber()).thenReturn(NON_PRIZE_NUMBER);
         when(participationWithPrize.getNumber()).thenReturn(PRIZE_NUMBER);
         when(participationWithPrize.getAmount()).thenReturn(BigDecimal.ONE);
-        when(cache.get(eq("elMundoResponseCacheKey"), Mockito.<Callable<Map<String, Integer>>>any())).thenAnswer(invocation -> {
+        when(cache.get(eq(EL_MUNDO_RESPONSE_CACHE_KEY), Mockito.<Callable<Map<String, Integer>>>any())).thenAnswer(invocation -> {
             Callable<Map<String, Integer>> argument = invocation.getArgument(1);
             return argument.call();
         });
@@ -109,14 +109,20 @@ class ElMundoPrizeServiceTest {
         verify(elMundoPrizesMap).get(NON_PRIZE_NUMBER);
         verify(template).exchange(eq(URL), eq(HttpMethod.GET), eq(null), eq(new ParameterizedTypeReference<ElMundoPrizes>() {
         }));
-        verifyNoMoreInteractions(template, participationWithoutPrize, participationWithPrize, cache, cacheManager, elMundoPrizesMap);
+        verifyNoMoreInteractions(template, participationWithoutPrize, participationWithPrize, cache, elMundoPrizesMap);
     }
 
     @Test
     void retrievePrizesWithNullResponse() {
-        when(cache.get(eq("elMundoResponseCacheKey"), Mockito.<Callable<Map<String, Integer>>>any())).thenReturn(null);
+        when(cache.get(eq(EL_MUNDO_RESPONSE_CACHE_KEY), Mockito.<Callable<Map<String, Integer>>>any())).thenReturn(null);
         assertNull(service.retrievePrizes(Arrays.asList(participationWithoutPrize, participationWithPrize)));
-        verify(cache).invalidate();
-        verifyNoMoreInteractions(template, participationWithoutPrize, participationWithPrize, cache, cacheManager, elMundoPrizesMap);
+        verifyNoMoreInteractions(template, participationWithoutPrize, participationWithPrize, cache, elMundoPrizesMap);
+    }
+
+    @Test
+    void evictCache() {
+        service.evictCache();
+        verify(cache).evict(EL_MUNDO_RESPONSE_CACHE_KEY);
+        verifyNoMoreInteractions(cache);
     }
 }
