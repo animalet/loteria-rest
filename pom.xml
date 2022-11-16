@@ -16,7 +16,7 @@
         <maven.compiler.source>13</maven.compiler.source>
         <maven.compiler.target>13</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring.version>2.2.6.RELEASE</spring.version>
+        <spring.version>2.5.12</spring.version>
         <mockito.version>3.3.3</mockito.version>
         <lombok.version>1.18.12</lombok.version>
         <commons-lang3.version>3.10</commons-lang3.version>
